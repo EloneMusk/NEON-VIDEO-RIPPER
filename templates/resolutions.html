@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SELECT RESOLUTION</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="container">
+        <header class="neon-header">
+            <h1 class="glitch" data-text="RESOLUTION MATRIX">RESOLUTION MATRIX</h1>
+            <p class="subtitle">SELECT DESIRED QUALITY LEVEL</p>
+        </header>
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-controls">
+                    <span class="control red"></span>
+                    <span class="control yellow"></span>
+                    <span class="control green"></span>
+                </div>
+            </div>
+            <div class="terminal-body">
+                <form method="POST" action="/download" class="cyber-form" id="downloadForm">
+                    <input type="hidden" name="video_url" value="{{ video_url }}">
+                    <div class="input-group">
+                        <select name="format_id" class="cyber-select">
+                            {% for res, details in resolutions %}
+                            <option value="{{ details.format_id }}">{{ res }} RESOLUTION</option>
+                            {% endfor %}
+                        </select>
+                        <span class="select-border"></span>
+                    </div>
+                    <input type="hidden" name="file_ext" value="{{ resolutions[0][1].ext }}">
+                    <div class="download-controls">
+                        <button type="submit" class="cyber-button" id="downloadBtn">
+                            <span class="cyber-button-text">EXECUTE DOWNLOAD</span>
+                            <span class="cyber-button-glow"></span>
+                        </button>
+                        <button type="button" class="cyber-button cyber-button-danger" id="cancelBtn" style="display: none;">
+                            <span class="cyber-button-text">ABORT DOWNLOAD</span>
+                            <span class="cyber-button-glow"></span>
+                        </button>
+                        <a href="/" class="cyber-button cyber-button-secondary">
+                            <span class="cyber-button-text">RETURN TO INPUT</span>
+                            <span class="cyber-button-glow"></span>
+                        </a>
+                    </div>
+                    <div class="progress-container" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress" id="downloadProgress"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">INITIALIZING...</div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        const downloadForm = document.getElementById('downloadForm');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const progressContainer = document.querySelector('.progress-container');
+        const progressBar = document.getElementById('downloadProgress');
+        const progressText = document.getElementById('progressText');
+
+        downloadForm.onsubmit = function(e) {
+            e.preventDefault();
+            downloadBtn.style.display = 'none';
+            cancelBtn.style.display = 'block';
+            progressContainer.style.display = 'block';
+            progressText.textContent = 'INITIALIZING...';
+
+            cancelBtn.onclick = function() {
+                socket.emit('cancel_download');
+                downloadBtn.style.display = 'block';
+                cancelBtn.style.display = 'none';
+                progressContainer.style.display = 'none';
+                progressText.textContent = 'DOWNLOAD CANCELLED';
+            };
+
+            fetch('/download', {
+                method: 'POST',
+                body: new FormData(downloadForm)
+            }).then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Download failed');
+            }).then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                resetDownloadState();
+            }).catch(error => {
+                progressText.textContent = 'DOWNLOAD FAILED';
+                progressText.style.color = '#ff0000';
+                setTimeout(resetDownloadState, 3000);
+            });
+        };
+
+        function resetDownloadState() {
+            downloadBtn.style.display = 'block';
+            cancelBtn.style.display = 'none';
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressText.style.color = '';
+            progressText.textContent = '';
+        }
+
+        cancelBtn.onclick = function() {
+            socket.emit('cancel_download');
+            resetDownloadState();
+        };
+
+        socket.on('download_progress', function(data) {
+            progressBar.style.width = data.progress + '%';
+            progressText.textContent = `DOWNLOADING: ${Math.round(data.progress)}% | Size: ${data.downloaded} of ${data.total} | Speed: ${data.speed} | ETA: ${data.eta}`;
+        });
+
+        socket.on('download_complete', function(data) {
+            progressText.textContent = 'DOWNLOAD COMPLETE';
+            progressBar.style.width = '100%';
+        });
+
+        socket.on('download_cancelled', function() {
+            progressText.textContent = 'DOWNLOAD ABORTED';
+            progressText.style.color = '#ff0000';
+            setTimeout(resetDownloadState, 3000);
+        });
+
+        function resetDownloadState() {
+            downloadBtn.style.display = 'block';
+            cancelBtn.style.display = 'none';
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressText.style.color = 'var(--matrix-green)';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEON VIDEO RIPPER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Ubuntu+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="container">
+        <header class="neon-header">
+            <h1 class="glitch" data-text="NEON VIDEO RIPPER">NEON VIDEO RIPPER</h1>
+            <p class="subtitle">CYBERPUNK 2077 EDITION</p>
+        </header>
+
+        {% if error %}
+        <div class="error-terminal">
+            <div class="terminal-header">
+                <div class="terminal-controls">
+                    <span class="control red"></span>
+                    <span class="control yellow"></span>
+                    <span class="control green"></span>
+                </div>
+            </div>
+            <div class="terminal-body">
+                <p class="error-message">ERROR: {{ error }}</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-controls">
+                    <span class="control red"></span>
+                    <span class="control yellow"></span>
+                    <span class="control green"></span>
+                </div>
+            </div>
+            <div class="terminal-body">
+                <form method="POST" class="cyber-form">
+                    <div class="input-group">
+                        <input type="url" name="url" class="cyber-input" 
+                               placeholder="ENTER YOUTUBE URL" required>
+                        <span class="input-border"></span>
+                    </div>
+                    <button type="submit" class="cyber-button">
+                        <span class="cyber-button-text">INITIALIZE DOWNLOAD</span>
+                        <span class="cyber-button-glow"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
