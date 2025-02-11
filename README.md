@@ -17,7 +17,7 @@ A cyberpunk-themed YouTube video downloader with a sleek, neon-infused interface
 1. Clone the repository:
 ```bash
 git clone https://github.com/EloneMusk/NEON-VIDEO-RIPPER
-cd Trae
+cd NeonVideoRipper
 ```
 
 2. Install required packages:
